@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- White download arrow icon -->
+    <group
+        android:translateX="24"
+        android:translateY="24">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M30,10 L30,36 L42,24 L46.24,28.24 L30,44.48 L13.76,28.24 L18,24 L30,36 L30,10 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M10,46 L50,46 L50,50 L10,50 Z" />
+    </group>
+</vector>
