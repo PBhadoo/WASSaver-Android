@@ -75,3 +75,5 @@ This will trigger the workflow, build a signed `WASSaver-v1.0.0.apk`, and create
 ---
 
 Built with ❤️ by Parveen Bhadoo
+
+Credits: [Claude Opus 4.6 1M](https://anthropic.com) by [Anthropic](https://anthropic.com)
