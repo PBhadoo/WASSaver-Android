@@ -136,6 +136,12 @@ class StatusViewModel(application: Application) : AndroidViewModel(application) 
             }
             _allStatuses.value = statuses
             _isLoading.value = false
+            
+            // Debug: Log what was loaded
+            val videoCount = statuses.count { it.isVideo }
+            val photoCount = statuses.count { it.isImage }
+            android.util.Log.d("StatusViewModel", "Loaded ${statuses.size} statuses: $photoCount photos, $videoCount videos")
+            android.util.Log.d("StatusViewModel", "Current filter: ${_selectedFilter.value}")
         }
     }
 
@@ -206,6 +212,50 @@ class StatusViewModel(application: Application) : AndroidViewModel(application) 
                 Toast.makeText(
                     getApplication(),
                     "Failed to save status",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    fun deleteSavedStatus(statusFile: StatusFile) {
+        viewModelScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                repository.deleteSavedStatus(statusFile)
+            }
+            if (success) {
+                Toast.makeText(
+                    getApplication(),
+                    "Status deleted",
+                    Toast.LENGTH_SHORT
+                ).show()
+                loadSavedStatuses()
+            } else {
+                Toast.makeText(
+                    getApplication(),
+                    "Failed to delete status",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    fun deleteSavedStatuses(statusFiles: List<StatusFile>) {
+        viewModelScope.launch {
+            val deletedCount = withContext(Dispatchers.IO) {
+                repository.deleteSavedStatuses(statusFiles)
+            }
+            if (deletedCount > 0) {
+                Toast.makeText(
+                    getApplication(),
+                    "$deletedCount status${if (deletedCount > 1) "es" else ""} deleted",
+                    Toast.LENGTH_SHORT
+                ).show()
+                loadSavedStatuses()
+            } else {
+                Toast.makeText(
+                    getApplication(),
+                    "Failed to delete statuses",
                     Toast.LENGTH_SHORT
                 ).show()
             }

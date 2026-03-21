@@ -194,24 +194,36 @@ class StatusRepository(private val context: Context) {
 
             val savedFiles = getSavedFileNames()
 
-            documentFile.listFiles()
+            val result = documentFile.listFiles()
                 .filter { file ->
                     val ext = file.name?.substringAfterLast(".", "")?.lowercase() ?: ""
-                    ext in SUPPORTED_EXTENSIONS && file.name?.startsWith(".") == false
+                    val isSupported = ext in SUPPORTED_EXTENSIONS && file.name?.startsWith(".") == false
+                    if (!isSupported && file.name?.startsWith(".") == false) {
+                        android.util.Log.d("StatusRepository", "Filtered out file: ${file.name} with ext: $ext")
+                    }
+                    isSupported
                 }
                 .map { file ->
                     val name = file.name ?: "unknown"
                     val ext = name.substringAfterLast(".", "").lowercase()
+                    val isVideo = ext in VIDEO_EXTENSIONS
+                    android.util.Log.d("StatusRepository", "Found file: $name, ext: $ext, isVideo: $isVideo")
                     StatusFile(
                         uri = file.uri,
                         name = name,
                         dateModified = file.lastModified(),
                         size = file.length(),
-                        isVideo = ext in VIDEO_EXTENSIONS,
+                        isVideo = isVideo,
                         isSaved = name in savedFiles
                     )
                 }
                 .sortedByDescending { it.dateModified }
+            
+            val videoCount = result.count { it.isVideo }
+            val photoCount = result.count { !it.isVideo }
+            android.util.Log.d("StatusRepository", "loadStatusesViaSAF: Loaded $photoCount photos, $videoCount videos")
+            
+            result
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -485,6 +497,48 @@ class StatusRepository(private val context: Context) {
         }
 
         return result.sortedByDescending { it.dateModified }
+    }
+
+    /**
+     * Delete a saved status file
+     */
+    fun deleteSavedStatus(statusFile: StatusFile): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Use MediaStore to delete
+                context.contentResolver.delete(statusFile.uri, null, null)
+                true
+            } else {
+                // Direct file deletion for legacy
+                @Suppress("DEPRECATION")
+                val saveDir = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                    SAVE_DIR
+                )
+                val file = File(saveDir, statusFile.name)
+                if (file.exists()) {
+                    file.delete()
+                } else {
+                    false
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
+     * Delete multiple saved status files
+     */
+    fun deleteSavedStatuses(statusFiles: List<StatusFile>): Int {
+        var deletedCount = 0
+        statusFiles.forEach { file ->
+            if (deleteSavedStatus(file)) {
+                deletedCount++
+            }
+        }
+        return deletedCount
     }
 
     /**
