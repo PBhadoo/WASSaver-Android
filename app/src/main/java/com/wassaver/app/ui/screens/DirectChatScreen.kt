@@ -179,14 +179,7 @@ fun DirectChatScreen() {
                                 keyboardType = KeyboardType.Phone,
                                 imeAction = ImeAction.Next
                             ),
-                            shape = RoundedCornerShape(12.dp),
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.Public,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
+                            shape = RoundedCornerShape(12.dp)
                         )
 
                         // Phone number
