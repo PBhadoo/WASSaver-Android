@@ -194,35 +194,25 @@ class StatusRepository(private val context: Context) {
 
             val savedFiles = getSavedFileNames()
 
-            val result = documentFile.listFiles()
+            val result = (documentFile.listFiles() ?: emptyArray())
                 .filter { file ->
                     val ext = file.name?.substringAfterLast(".", "")?.lowercase() ?: ""
-                    val isSupported = ext in SUPPORTED_EXTENSIONS && file.name?.startsWith(".") == false
-                    if (!isSupported && file.name?.startsWith(".") == false) {
-                        android.util.Log.d("StatusRepository", "Filtered out file: ${file.name} with ext: $ext")
-                    }
-                    isSupported
+                    ext in SUPPORTED_EXTENSIONS && file.name?.startsWith(".") == false
                 }
                 .map { file ->
                     val name = file.name ?: "unknown"
                     val ext = name.substringAfterLast(".", "").lowercase()
-                    val isVideo = ext in VIDEO_EXTENSIONS
-                    android.util.Log.d("StatusRepository", "Found file: $name, ext: $ext, isVideo: $isVideo")
                     StatusFile(
                         uri = file.uri,
                         name = name,
                         dateModified = file.lastModified(),
                         size = file.length(),
-                        isVideo = isVideo,
+                        isVideo = ext in VIDEO_EXTENSIONS,
                         isSaved = name in savedFiles
                     )
                 }
                 .sortedByDescending { it.dateModified }
-            
-            val videoCount = result.count { it.isVideo }
-            val photoCount = result.count { !it.isVideo }
-            android.util.Log.d("StatusRepository", "loadStatusesViaSAF: Loaded $photoCount photos, $videoCount videos")
-            
+
             result
         } catch (e: Exception) {
             e.printStackTrace()
@@ -270,8 +260,28 @@ class StatusRepository(private val context: Context) {
             val inputStream = context.contentResolver.openInputStream(statusFile.uri)
                 ?: return false
 
-            val mimeType = if (statusFile.isVideo) "video/mp4" else "image/jpeg"
-            val relativePath = "${Environment.DIRECTORY_PICTURES}/$SAVE_DIR"
+            val ext = statusFile.name.substringAfterLast(".", "").lowercase()
+            val mimeType = if (statusFile.isVideo) {
+                when (ext) {
+                    "mkv" -> "video/x-matroska"
+                    "avi" -> "video/avi"
+                    "3gp" -> "video/3gpp"
+                    "webm" -> "video/webm"
+                    else -> "video/mp4"
+                }
+            } else {
+                when (ext) {
+                    "png" -> "image/png"
+                    "gif" -> "image/gif"
+                    "webp" -> "image/webp"
+                    else -> "image/jpeg"
+                }
+            }
+            val relativePath = if (statusFile.isVideo) {
+                "${Environment.DIRECTORY_MOVIES}/$SAVE_DIR"
+            } else {
+                "${Environment.DIRECTORY_PICTURES}/$SAVE_DIR"
+            }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val contentValues = ContentValues().apply {
@@ -295,10 +305,12 @@ class StatusRepository(private val context: Context) {
                 inputStream.close()
             } else {
                 @Suppress("DEPRECATION")
-                val saveDir = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                    SAVE_DIR
-                )
+                val baseDir = if (statusFile.isVideo) {
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)
+                } else {
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                }
+                val saveDir = File(baseDir, SAVE_DIR)
                 if (!saveDir.exists()) saveDir.mkdirs()
 
                 val outFile = File(saveDir, statusFile.name)

@@ -237,7 +237,7 @@ private fun VideoPlayer(status: StatusFile, isCurrentPage: Boolean) {
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(exoPlayer) {
         onDispose {
             exoPlayer.release()
         }

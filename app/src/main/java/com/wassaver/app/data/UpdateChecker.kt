@@ -62,10 +62,9 @@ object UpdateChecker {
      * Fetch the latest release from GitHub API
      */
     private fun fetchLatestRelease(): ReleaseInfo? {
-        val url = URL("$RELEASES_URL/latest")
-        val connection = url.openConnection() as HttpURLConnection
-
+        var connection: HttpURLConnection? = null
         return try {
+            connection = URL("$RELEASES_URL/latest").openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             connection.setRequestProperty("User-Agent", "WASSaver-Android")
@@ -83,7 +82,7 @@ object UpdateChecker {
             Log.e(TAG, "Error fetching release", e)
             null
         } finally {
-            connection.disconnect()
+            connection?.disconnect()
         }
     }
 
@@ -91,10 +90,9 @@ object UpdateChecker {
      * Fetch all releases from GitHub API
      */
     suspend fun fetchAllReleases(): List<ReleaseInfo> = withContext(Dispatchers.IO) {
-        val url = URL("$RELEASES_URL?per_page=10")
-        val connection = url.openConnection() as HttpURLConnection
-
+        var connection: HttpURLConnection? = null
         try {
+            connection = URL("$RELEASES_URL?per_page=10").openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             connection.setRequestProperty("User-Agent", "WASSaver-Android")
@@ -117,7 +115,7 @@ object UpdateChecker {
             Log.e(TAG, "Error fetching releases", e)
             emptyList()
         } finally {
-            connection.disconnect()
+            connection?.disconnect()
         }
     }
 

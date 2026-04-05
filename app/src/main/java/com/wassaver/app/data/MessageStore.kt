@@ -65,6 +65,7 @@ object MessageStore {
     /**
      * Save a captured message
      */
+    @Synchronized
     fun saveMessage(context: Context, message: CapturedMessage) {
         if (!isListenerEnabled(context)) return
 
@@ -164,6 +165,7 @@ object MessageStore {
     /**
      * Delete a single message
      */
+    @Synchronized
     fun deleteMessage(context: Context, messageId: String) {
         val prefs = getPrefs(context)
         val messagesJson = prefs.getString(KEY_MESSAGES, "[]") ?: "[]"

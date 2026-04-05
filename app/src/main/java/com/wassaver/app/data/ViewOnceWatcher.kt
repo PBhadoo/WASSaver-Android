@@ -121,7 +121,7 @@ class ViewOnceWatcher(
                 emptySet()
             }
 
-            doc.listFiles()
+            (doc.listFiles() ?: emptyArray())
                 .filter { file ->
                     val ext = file.name?.substringAfterLast(".", "")?.lowercase() ?: ""
                     ext in SUPPORTED_EXTENSIONS && file.name?.startsWith(".") == false
